@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sirra</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6a9e7f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sirra">
+<meta name="description" content="誰にも届けない、自分だけの日記">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+/* ===== THEMES ===== */
+:root {
+  --bg:#f7f9f6; --bg2:#eef3eb;
+  --accent:#6a9e7f; --accent-light:#a8c9b2; --accent-pale:#dceee3; --accent-dark:#3d6b52;
+  --text:#2c3a30; --text-sub:#7a9282; --white:#ffffff; --card:#ffffff; --border:#dceee3;
+  --radius:16px;
+}
+[data-theme="bluegrey"] {
+  --bg:#f5f7fa; --bg2:#eaeef4;
+  --accent:#6a84a8; --accent-light:#a0b4cc; --accent-pale:#d8e4f0; --accent-dark:#3a5474;
+  --text:#2a3040; --text-sub:#7a8899; --white:#ffffff; --card:#ffffff; --border:#d8e4f0;
+}
+[data-theme="terracotta"] {
+  --bg:#faf7f5; --bg2:#f4ede8;
+  --accent:#b07060; --accent-light:#cc9988; --accent-pale:#f0ddd8; --accent-dark:#7a4030;
+  --text:#3a2820; --text-sub:#9a7870; --white:#ffffff; --card:#ffffff; --border:#f0ddd8;
+}
+[data-theme="dark"] {
+  --bg:#181c1a; --bg2:#222820;
+  --accent:#6a9e7f; --accent-light:#4a7a5a; --accent-pale:#1e2e24; --accent-dark:#a8c9b2;
+  --text:#e0ebe4; --text-sub:#6a8a74; --white:#242e28; --card:#1e2820; --border:#2a3a2e;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);font-family:'Zen Kaku Gothic New',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .3s,color .3s;}
+.app{width:100%;max-width:390px;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);transition:background .3s;}
+
+/* ===== HEADER ===== */
+.header{padding:48px 24px 16px;display:flex;align-items:center;justify-content:space-between;}
+.logo-wrap{display:flex;align-items:center;gap:8px;}
+.logo-mark{width:36px;height:36px;flex-shrink:0;}
+.logo-main{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;font-style:italic;color:var(--accent-dark);letter-spacing:.12em;line-height:1;position:relative;transition:color .3s;}
+.logo-main::after{content:'';position:absolute;bottom:1px;left:0;right:0;height:1.5px;background:linear-gradient(90deg,var(--accent),transparent);border-radius:1px;}
+.header-date{font-size:12px;color:var(--text-sub);}
+.date-picker{font-size:12px;color:var(--text-sub);background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font-family:'Zen Kaku Gothic New',sans-serif;outline:none;cursor:pointer;transition:border-color .2s;}
+.date-picker:focus{border-color:var(--accent-light);}
+.deco-line{height:2px;margin:0 24px;background:linear-gradient(90deg,var(--accent-light),transparent);border-radius:2px;}
+
+/* ===== PAGES ===== */
+.page{display:none;flex-direction:column;flex:1;animation:fadeUp .25s ease;}
+.page.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:var(--card);border-top:1px solid var(--border);display:flex;padding:10px 0 24px;z-index:100;transition:background .3s,border-color .3s;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 0;}
+.nav-icon{font-size:22px;opacity:.35;}
+.nav-label{font-size:10px;color:var(--text-sub);}
+.nav-item.active .nav-icon{opacity:1;}
+.nav-item.active .nav-label{color:var(--accent-dark);font-weight:700;}
+
+/* ===== SHARED ===== */
+.scroll-content{padding:0 24px 110px;overflow-y:auto;}
+.section-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:600;color:var(--text);padding:20px 0 0;}
+.input-field{width:100%;background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:16px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;resize:none;}
+.input-field:focus{border-color:var(--accent-light);}
+.input-field::placeholder{color:var(--text-sub);opacity:.6;}
+.primary-btn{width:100%;padding:18px;border-radius:var(--radius);border:none;background:var(--accent);color:#fff;font-family:'Zen Kaku Gothic New',sans-serif;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.1);transition:all .2s;}
+.primary-btn:active{transform:scale(.97);}
+.ghost-btn{background:none;border:none;color:var(--text-sub);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;cursor:pointer;padding:12px 0;text-align:center;width:100%;}
+.char-count{font-size:11px;color:var(--text-sub);text-align:right;margin-top:6px;}
+
+/* ===== PAGE: 投稿 ===== */
+.branch-label{font-size:13px;color:var(--text-sub);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.branch-question{font-family:'Shippori Mincho',serif;font-size:24px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:40px;}
+.branch-btn{width:100%;padding:20px;border-radius:var(--radius);border:none;font-family:'Zen Kaku Gothic New',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.branch-btn-yes{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.12);}
+.branch-btn-no{background:var(--card);color:var(--accent-dark);border:2px solid var(--border);}
+.branch-btn:active{transform:scale(.97);}
+.btn-sub{font-size:12px;font-weight:400;opacity:.75;}
+
+.step-bar{display:flex;gap:6px;margin-bottom:28px;}
+.step-dot{height:4px;border-radius:2px;background:var(--border);flex:1;transition:background .3s;}
+.step-dot.done{background:var(--accent);}
+.step-dot.active{background:var(--accent-light);}
+.step-label{font-size:11px;color:var(--text-sub);letter-spacing:.1em;margin-bottom:8px;}
+.step-q{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:24px;line-height:1.5;}
+
+.mood-row{display:flex;gap:8px;margin-bottom:8px;}
+.mood-btn{flex:1;height:52px;border-radius:12px;border:2px solid var(--border);background:var(--card);font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;color:var(--text-sub);cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.mood-btn .num{font-size:16px;font-weight:700;}
+.mood-btn .lbl{font-size:9px;font-weight:400;}
+.mood-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+.mood-btn:active{transform:scale(.94);}
+
+.mini-title{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.5;}
+.mini-sub{font-size:13px;color:var(--text-sub);margin-bottom:24px;}
+.q-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .15s;}
+.q-card:active{transform:scale(.98);border-color:var(--accent-light);}
+.q-card.selected{border-color:var(--accent);background:var(--accent-pale);}
+.q-icon{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.q-text{font-size:15px;font-weight:500;color:var(--text);}
+
+.done-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:0 24px 80px;}
+.done-icon{width:80px;height:80px;background:var(--accent-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.done-title{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:600;color:var(--accent-dark);}
+.done-sub{font-size:14px;color:var(--text-sub);line-height:1.7;}
+
+/* ===== PAGE: カレンダー ===== */
+.month-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;}
+.month-label{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:600;color:var(--text);}
+.month-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--accent-dark);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.month-btn:active{background:var(--accent-pale);}
+.dow-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.dow-cell{text-align:center;font-size:11px;color:var(--text-sub);padding:4px 0;font-weight:500;}
+.dow-cell.sun{color:#c0796a;} .dow-cell.sat{color:#6a82c0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.day-cell{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:all .15s;gap:2px;overflow:hidden;}
+.day-cell.has-record{background:var(--card);box-shadow:0 1px 6px rgba(0,0,0,.07);}
+.day-cell.has-record:active{transform:scale(.93);}
+.day-num{font-size:13px;font-weight:500;color:var(--text);line-height:1;position:relative;z-index:1;}
+.day-cell.today .day-num{color:#fff;background:var(--accent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+.day-cell.sun-col .day-num{color:#c0796a;}
+.day-cell.sat-col .day-num{color:#6a82c0;}
+.day-cell.today .day-num{color:#fff!important;}
+.score-fill{position:absolute;bottom:0;left:0;right:0;z-index:0;border-radius:0 0 10px 10px;}
+
+/* drawer */
+.overlay{position:fixed;inset:0;background:rgba(44,58,48,.3);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:390px;background:var(--card);border-radius:24px 24px 0 0;z-index:201;padding:0 0 48px;transition:transform .3s cubic-bezier(.32,.72,0,1);max-height:80vh;overflow-y:auto;}
+.drawer.open{transform:translateX(-50%) translateY(0);}
+.drawer-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 20px;}
+.drawer-header{padding:0 24px 16px;border-bottom:1px solid var(--border);}
+.drawer-date{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:600;color:var(--text);}
+.drawer-score-row{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:var(--text-sub);}
+.drawer-score-num{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent-dark);}
+.drawer-body{padding:20px 24px;}
+.drawer-sec{font-size:10px;letter-spacing:.12em;color:var(--text-sub);text-transform:uppercase;margin-bottom:8px;margin-top:20px;}
+.drawer-sec:first-child{margin-top:0;}
+.drawer-content{font-size:15px;color:var(--text);line-height:1.75;background:var(--bg);border-radius:12px;padding:14px 16px;}
+
+/* ===== PAGE: レポート ===== */
+.summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:16px 0;}
+.sum-card{background:var(--card);border-radius:var(--radius);padding:14px 12px;text-align:center;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.sum-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--accent-dark);line-height:1;}
+.sum-unit{font-size:11px;color:var(--text-sub);margin-left:2px;}
+.sum-label{font-size:10px;color:var(--text-sub);margin-top:5px;letter-spacing:.05em;}
+.graph-card{background:var(--card);border-radius:var(--radius);padding:20px 16px 16px;box-shadow:0 1px 8px rgba(0,0,0,.06);margin-bottom:14px;}
+.graph-title{font-size:12px;color:var(--text-sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.word-card{background:var(--card);border-radius:var(--radius);padding:20px;box-shadow:0 1px 8px rgba(0,0,0,.06);margin-bottom:14px;}
+.word-title{font-size:12px;color:var(--text-sub);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.word-list{display:flex;flex-wrap:wrap;gap:8px;}
+.word-tag{background:var(--accent-pale);border-radius:20px;padding:6px 14px;font-size:13px;color:var(--accent-dark);font-weight:500;}
+.word-tag.large{font-size:16px;padding:8px 18px;}
+.word-tag.small{font-size:11px;padding:4px 10px;opacity:.7;}
+.memo-card{background:var(--accent-pale);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
+.memo-label{font-size:10px;color:var(--accent-dark);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;font-weight:700;}
+.memo-text{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--accent-dark);line-height:1.8;}
+
+/* ===== PAGE: 振り返り & 設定 ===== */
+.tab-bar{display:flex;margin:16px 0 0;background:var(--bg2);border-radius:12px;padding:3px;gap:2px;transition:background .3s;}
+.tab-btn{flex:1;padding:9px 0;border-radius:10px;border:none;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--text-sub);transition:all .2s;}
+.tab-btn.active{background:var(--card);color:var(--accent-dark);font-weight:700;box-shadow:0 1px 6px rgba(0,0,0,.08);}
+
+.lb-header{padding:16px 0 12px;display:flex;align-items:center;justify-content:space-between;}
+.lb-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:600;color:var(--text);}
+.shuffle-btn{display:flex;align-items:center;gap:6px;background:var(--accent-pale);border:none;border-radius:20px;padding:8px 14px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;color:var(--accent-dark);font-weight:700;cursor:pointer;transition:all .15s;}
+.shuffle-btn:active{transform:scale(.95);}
+.lb-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;margin-bottom:12px;box-shadow:0 1px 8px rgba(0,0,0,.06);border-left:3px solid var(--accent-light);animation:cardIn .3s ease;cursor:default;}
+@keyframes cardIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.lb-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.lb-date{font-size:11px;color:var(--text-sub);}
+.lb-q{font-size:11px;color:var(--text-sub);margin-top:2px;}
+.lb-score{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--accent-dark);}
+.lb-badge{font-size:10px;color:var(--accent);background:var(--accent-pale);border-radius:10px;padding:2px 8px;font-weight:500;}
+.lb-text{font-size:14px;color:var(--text);line-height:1.75;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+
+.set-label{font-size:11px;color:var(--text-sub);letter-spacing:.12em;text-transform:uppercase;margin:20px 0 10px;padding-left:4px;}
+.set-card{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.06);margin-bottom:14px;transition:background .3s;}
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px;}
+.theme-opt{border-radius:12px;padding:14px;cursor:pointer;border:2px solid transparent;transition:all .2s;display:flex;flex-direction:column;gap:8px;}
+.theme-opt.selected{border-color:var(--accent);}
+.theme-preview{height:36px;border-radius:8px;display:flex;align-items:center;padding:0 10px;gap:6px;border:1px solid rgba(0,0,0,.07);}
+.theme-dot{width:8px;height:8px;border-radius:50%;}
+.theme-line{height:2px;flex:1;border-radius:1px;opacity:.5;}
+.theme-name{font-size:12px;font-weight:600;color:var(--text);}
+.theme-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;align-self:flex-end;transition:all .2s;}
+.theme-opt.selected .theme-check{background:var(--accent);border-color:var(--accent);color:#fff;}
+.action-btn{width:100%;padding:16px 20px;display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:var(--radius);font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;font-weight:500;color:var(--text);cursor:pointer;box-shadow:0 1px 8px rgba(0,0,0,.06);transition:all .15s;margin-bottom:10px;text-align:left;}
+.action-btn:active{transform:scale(.98);}
+.action-btn.danger{color:#c0504a;}
+.action-btn-icon{width:34px;height:34px;border-radius:10px;background:var(--accent-pale);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.action-btn.danger .action-btn-icon{background:#fde8e6;}
+.action-btn-texts div:last-child{font-size:11px;color:var(--text-sub);margin-top:2px;}
+.action-btn.danger .action-btn-texts div:last-child{color:#c0504a;}
+.version{text-align:center;font-size:11px;color:var(--text-sub);margin-top:8px;letter-spacing:.05em;}
+
+.sub-screen{display:none;} .sub-screen.active{display:block;}
+
+/* ===== 感情選択 ===== */
+.emotion-categories{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0;}
+.emo-cat-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:14px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s;font-family:'Zen Kaku Gothic New',sans-serif;}
+.emo-cat-btn svg{width:36px;height:36px;}
+.emo-cat-btn .emo-label{font-size:12px;font-weight:600;color:var(--text-sub);}
+.emo-cat-btn.selected{border-color:var(--accent);background:var(--accent-pale);}
+.emo-cat-btn.selected .emo-label{color:var(--accent-dark);}
+.emo-cat-btn.selected svg [data-stroke]{stroke:var(--accent-dark);}
+.emo-cat-btn.selected svg [data-fill]{fill:var(--accent-dark);}
+.emotion-detail{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 20px;}
+.emo-detail-btn{padding:7px 14px;border-radius:16px;border:1.5px solid var(--border);background:var(--card);font-size:13px;color:var(--text-sub);cursor:pointer;transition:all .15s;font-family:'Zen Kaku Gothic New',sans-serif;}
+.emo-detail-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+/* ===== 対象選択 ===== */
+.target-list{display:flex;flex-direction:column;gap:10px;margin:16px 0 20px;}
+.target-btn{padding:14px 18px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--card);font-size:14px;color:var(--text);cursor:pointer;text-align:left;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;}
+.target-btn.selected{border-color:var(--accent);background:var(--accent-pale);color:var(--accent-dark);font-weight:600;}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;background:var(--accent-pale);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--accent-dark);}
+
+/* ===== 月次振り返り ===== */
+.recap{position:fixed;inset:0;background:#1a2420;z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;overflow:hidden;}
+.recap-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;opacity:0;transition:opacity .8s ease;}
+.recap-slide.active{opacity:1;}
+.recap-label{font-size:11px;letter-spacing:.2em;color:#6a9e7f;text-transform:uppercase;margin-bottom:16px;}
+.recap-num{font-family:'Cormorant Garamond',serif;font-size:88px;font-weight:600;color:#fff;line-height:1;}
+.recap-unit{font-size:16px;color:#a8c9b2;margin-top:4px;}
+.recap-text{font-family:'Shippori Mincho',serif;font-size:22px;color:#fff;text-align:center;line-height:1.8;}
+.recap-sub{font-size:13px;color:#6a8a74;text-align:center;margin-top:12px;line-height:1.7;}
+.recap-words{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px;}
+.recap-word{background:rgba(106,158,127,.2);border-radius:20px;padding:6px 16px;font-size:14px;color:#a8c9b2;}
+.recap-word.large{font-size:18px;padding:8px 20px;}
+.recap-progress{position:absolute;bottom:80px;display:flex;gap:6px;}
+.recap-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);}
+.recap-dot.active{background:#6a9e7f;}
+.recap-skip{position:absolute;bottom:40px;right:28px;font-size:12px;color:#6a8a74;background:none;border:none;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;}
+.recap-tap{position:absolute;inset:0;cursor:pointer;}
+
+/* ===== チュートリアル ===== */
+.tutorial{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;}
+.tutorial-text{font-family:'Shippori Mincho',serif;font-size:22px;font-weight:600;color:var(--text);text-align:center;line-height:1.8;opacity:0;transition:opacity .9s ease;}
+.tutorial-text.show{opacity:1;}
+.tutorial-sub{font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;color:var(--text-sub);text-align:center;margin-top:16px;opacity:0;transition:opacity .9s ease;}
+.tutorial-sub.show{opacity:1;}
+.tutorial-skip{position:absolute;bottom:48px;right:28px;font-size:12px;color:var(--text-sub);background:none;border:none;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;padding:8px;}
+</style>
+</head>
+<body>
+
+<!-- ===== 月次振り返り ===== -->
+<div class="recap" id="recap" style="display:none;">
+  <div id="recap-slides"></div>
+  <div class="recap-progress" id="recap-progress"></div>
+  <button class="recap-skip" onclick="closeRecap()">とじる</button>
+  <div class="recap-tap" onclick="nextRecapSlide()"></div>
+</div>
+
+<!-- ===== チュートリアル ===== -->
+<div class="tutorial" id="tutorial">
+  <div class="tutorial-text" id="tut-text"></div>
+  <div class="tutorial-sub" id="tut-sub"></div>
+  <button class="tutorial-skip" onclick="skipTutorial()">スキップ</button>
+</div>
+
+<div class="app" id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div style="font-size:11px;color:var(--text-sub);letter-spacing:0.05em;margin-bottom:4px;" id="today-date"></div>
+      <div class="logo-wrap">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" fill="none">
+          <!-- 外円ベース -->
+          <circle cx="16" cy="16" r="13" fill="var(--accent-pale)" stroke="var(--accent)" stroke-width="1.4"/>
+          <!-- 三日月（左側1/3） -->
+          <path d="M16 3C16 3 7 6 5 13C3 20 7 27 16 29C10 26 7 21 7 16C7 11 10 6 16 3Z" fill="var(--accent)"/>
+          <!-- 鍵穴：月の右側スペース中央 x=19, y=15 -->
+          <circle cx="19" cy="14" r="3.2" fill="var(--accent)"/>
+          <circle cx="19" cy="14" r="1.4" fill="var(--accent-pale)"/>
+          <path d="M17.8 17 L17.8 21 L20.2 21 L20.2 17Z" fill="var(--accent)"/>
+        </svg>
+        </div>
+        <span class="logo-main">Sirra</span>
+      </div>
+    </div>
+    <div id="streak-area"></div>
+  </div>
+  <div class="deco-line"></div>
+
+  <!-- ========== PAGE: 投稿 ========== -->
+  <div class="page active" id="page-post" style="padding:0 24px 110px;">
+
+    <!-- 分岐 -->
+    <div class="sub-screen active" id="sub-branch" style="padding-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <span style="font-size:12px;color:var(--text-sub);">記録する日付を変更する</span>
+        <input type="date" class="date-picker" id="record-date" onchange="updateRecordDate()">
+      </div>
+      <button class="branch-btn branch-btn-yes" onclick="showSub('sub-structured');renderStep(0);">
+        <span style="font-size:22px">✍️</span>
+        <div><div>ある</div><div class="btn-sub">出来事・気持ちを記録する</div></div>
+      </button>
+      <button class="branch-btn branch-btn-no" onclick="showSub('sub-mini-list');renderMiniList();">
+        <span style="font-size:22px">💭</span>
+        <div><div>特にない</div><div class="btn-sub">今日のひとかけらを拾う</div></div>
+      </button>
+    </div>
+
+    <!-- 構造化入力 -->
+    <div class="sub-screen" id="sub-structured" style="padding-top:28px;">
+      <div class="step-bar">
+        <div class="step-dot active" id="dot-0"></div>
+        <div class="step-dot" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
+        <div class="step-dot" id="dot-5"></div>
+      </div>
+      <div id="step-content"></div>
+    </div>
+
+    <!-- ない側 質問リスト -->
+    <div class="sub-screen" id="sub-mini-list" style="padding-top:28px;">
+      <div class="mini-title">どれかひとつ、<br>選んでみて</div>
+      <div class="mini-sub">答えやすいもので大丈夫です</div>
+      <div id="mini-q-list"></div>
+      <button class="ghost-btn" onclick="showSub('sub-branch')">← もどる</button>
+    </div>
+
+    <!-- ない側 入力 -->
+    <div class="sub-screen" id="sub-mini-input" style="padding-top:28px;">
+      <div class="step-label">ちょっとだけ</div>
+      <div class="mini-title" id="mini-sel-q" style="margin-bottom:24px;"></div>
+      <textarea class="input-field" id="mini-answer" rows="5" placeholder="思いついたまま書いてみて"></textarea>
+      <div class="char-count"><span id="mini-char">0</span> 文字</div>
+      <div style="height:16px;"></div>
+      <div class="step-label">今日の気分は？</div>
+      <div class="mood-row" id="mini-mood-row"></div>
+      <button class="primary-btn" style="margin-top:24px;" onclick="saveRecord('mini');showSub('sub-done');">記録する</button>
+      <button class="ghost-btn" onclick="showSub('sub-mini-list')">← もどる</button>
+    </div>
+
+    <!-- 完了 -->
+    <div class="sub-screen" id="sub-done">
+      <div class="done-wrap">
+        <div class="done-icon">🌿</div>
+        <div class="done-title">記録しました</div>
+        <div class="done-sub">今日もちゃんと、自分と向き合えた。<br>積み重ねが、やがて自分の地図になる。</div>
+        <div id="done-feedback" style="width:100%;background:var(--bg2);border-radius:var(--radius);padding:16px 20px;margin-top:8px;text-align:left;"></div>
+        <button class="primary-btn" style="margin-top:8px;" onclick="showSub('sub-branch')">トップへもどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PAGE: カレンダー ========== -->
+  <div class="page" id="page-cal">
+    <div class="scroll-content">
+      <div class="month-nav">
+        <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+        <span class="month-label" id="cal-month-label"></span>
+        <button class="month-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="dow-row">
+        <div class="dow-cell sun">日</div><div class="dow-cell">月</div><div class="dow-cell">火</div>
+        <div class="dow-cell">水</div><div class="dow-cell">木</div><div class="dow-cell">金</div>
+        <div class="dow-cell sat">土</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+
+  <!-- ========== PAGE: レポート ========== -->
+  <div class="page" id="page-report">
+    <div class="scroll-content">
+      <div class="month-nav">
+        <button class="month-btn" onclick="changeReportMonth(-1)">‹</button>
+        <span class="month-label" id="rep-month-label"></span>
+        <button class="month-btn" onclick="changeReportMonth(1)">›</button>
+      </div>
+
+      <!-- サマリー -->
+      <div class="summary-row">
+        <div class="sum-card"><div><span class="sum-val" id="sum-count">—</span><span class="sum-unit">日</span></div><div class="sum-label">記録した日</div></div>
+        <div class="sum-card"><div><span class="sum-val" id="sum-diversity">—</span></div><div class="sum-label">感情の多様性</div></div>
+        <div class="sum-card"><div><span class="sum-val" id="sum-verbalize">—</span></div><div class="sum-label">言語化スコア</div></div>
+      </div>
+
+      <!-- 感情の傾向（ドーナツグラフ） -->
+      <div class="word-card" id="emo-trend-card">
+        <div class="word-title">今月の感情の傾向</div>
+        <div style="display:flex;align-items:center;gap:20px;margin-top:12px;">
+          <svg id="donut-chart" width="110" height="110" viewBox="0 0 110 110" style="flex-shrink:0;"></svg>
+          <div id="donut-legend" style="flex:1;display:flex;flex-direction:column;gap:7px;"></div>
+        </div>
+      </div>
+
+      <!-- 感情の対象分析 -->
+      <div class="word-card" id="target-card">
+        <div class="word-title">感情の向き先</div>
+        <div id="target-bars" style="margin-top:12px;display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+
+      <!-- 言語化スコア推移 -->
+      <div class="graph-card">
+        <div class="graph-title">言語化スコアの推移</div>
+        <svg id="line-chart" width="100%" style="display:block;"></svg>
+      </div>
+
+      <!-- 今月はじめて使った感情語 -->
+      <div class="word-card" id="new-words-card">
+        <div class="word-title">今月はじめて使った感情語</div>
+        <div class="word-list" id="new-word-list"></div>
+      </div>
+
+      <!-- ひとこと -->
+      <div class="memo-card">
+        <div class="memo-label">今月をひとことで言うと</div>
+        <div class="memo-text" id="memo-text">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PAGE: 振り返り & 設定 ========== -->
+  <div class="page" id="page-more">
+    <div class="scroll-content">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-lb" onclick="switchSubTab('lb')">振り返り</button>
+        <button class="tab-btn" id="tab-set" onclick="switchSubTab('set')">設定</button>
+      </div>
+
+      <!-- 振り返り -->
+      <div class="sub-screen active" id="subtab-lb">
+        <div class="lb-header">
+          <div class="lb-title">過去の記録</div>
+          <button class="shuffle-btn" onclick="renderLookback()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 4h8M1 10h8M9 2l3 2-3 2M9 8l3 2-3 2" stroke="var(--accent-dark)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            シャッフル
+          </button>
+        </div>
+        <div id="lb-list"></div>
+      </div>
+
+      <!-- 設定 -->
+      <div class="sub-screen" id="subtab-set">
+        <div class="set-label">テーマカラー</div>
+        <div class="set-card"><div class="theme-grid" id="theme-grid"></div></div>
+        <div class="set-label">データ管理</div>
+        <button class="action-btn" onclick="handleExport()">
+          <div class="action-btn-icon">📤</div>
+          <div class="action-btn-texts"><div>データをエクスポート</div><div>JSONファイルとして保存</div></div>
+        </button>
+        <button class="action-btn" onclick="handleImport()">
+          <div class="action-btn-icon">📥</div>
+          <div class="action-btn-texts"><div>データをインポート</div><div>JSONファイルから復元</div></div>
+        </button>
+        <button class="action-btn danger" onclick="handleDelete()">
+          <div class="action-btn-icon">🗑</div>
+          <div class="action-btn-texts"><div>すべてのデータを削除</div><div>この操作は取り消せません</div></div>
+        </button>
+        <div class="version">Sirra v0.1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-post" onclick="showPage('post')">
+      <span class="nav-icon">✏️</span><span class="nav-label">投稿</span>
+    </div>
+    <div class="nav-item" id="nav-cal" onclick="showPage('cal')">
+      <span class="nav-icon">📅</span><span class="nav-label">記録</span>
+    </div>
+    <div class="nav-item" id="nav-report" onclick="showPage('report')">
+      <span class="nav-icon">📊</span><span class="nav-label">レポート</span>
+    </div>
+    <div class="nav-item" id="nav-more" onclick="showPage('more')">
+      <span class="nav-icon">🔖</span><span class="nav-label">振り返り</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Drawer overlay -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <div class="drawer-date" id="drawer-date"></div>
+    <div class="drawer-score-row">気分スコア <span class="drawer-score-num" id="drawer-score"></span></div>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<script>
+// ===== 日付 =====
+const NOW = new Date();
+const pad = n => String(n).padStart(2,'0');
+const toKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+let recordDate = new Date(NOW);
+
+const todayKey = toKey(NOW);
+document.getElementById('today-date').textContent =
+  `${NOW.getFullYear()}.${pad(NOW.getMonth()+1)}.${pad(NOW.getDate())}`;
+document.getElementById('record-date').value = todayKey;
+
+function updateRecordDate() {
+  const val = document.getElementById('record-date').value;
+  if (val) recordDate = new Date(val + 'T00:00:00');
+}
+
+// ===== DB (IndexedDB永続化) =====
+const DB = {};
+let idb = null;
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('sirra', 1);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore('records', { keyPath: 'date' });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbGetAll() {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction('records', 'readonly');
+    const req = tx.objectStore('records').getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbPut(date, record) {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction('records', 'readwrite');
+    const req = tx.objectStore('records').put({ date, ...record });
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDelete(date) {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction('records', 'readwrite');
+    const req = tx.objectStore('records').delete(date);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction('records', 'readwrite');
+    const req = tx.objectStore('records').clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveDB(date, record) {
+  DB[date] = record;
+  await idbPut(date, record);
+}
+
+async function initDB() {
+  idb = await openIDB();
+  // localStorageからの移行
+  try {
+    const old = JSON.parse(localStorage.getItem('sirra_db') || '{}');
+    if (Object.keys(old).length) {
+      for (const [date, rec] of Object.entries(old)) {
+        await idbPut(date, rec);
+      }
+      localStorage.removeItem('sirra_db');
+    }
+  } catch {}
+  // IndexedDBから全件読み込み
+  const all = await idbGetAll();
+  all.forEach(r => { const { date, ...rec } = r; DB[date] = rec; });
+}
+
+// ===== PAGE 切り替え =====
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'cal') renderCalendar();
+  if (name === 'report') renderReport();
+  if (name === 'more') renderLookback();
+}
+
+// ===== 投稿: subscreen =====
+function showSub(id) {
+  document.querySelectorAll('#page-post .sub-screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== 構造化入力 =====
+const EMOTION_MAP = {
+  '喜': { type:'pos', label:'喜（嬉しい）',  words:['嬉しい','誇らしい','感謝','ほっとした','報われた'] },
+  '楽': { type:'pos', label:'楽（楽しい）',  words:['楽しい','ワクワク','高揚','解放感','充実'] },
+  '安': { type:'pos', label:'安（安心）',    words:['安心','穏やか','落ち着き','温かい','包まれる'] },
+  '愛': { type:'pos', label:'愛（愛情）',    words:['愛しい','大切にされた','つながりを感じた','ときめき','愛着'] },
+  '興': { type:'pos', label:'興味（好奇心）',words:['面白い','もっと知りたい','引き込まれた','新鮮','発見'] },
+  '悲': { type:'neg', label:'悲（悲しみ）',  words:['悲しい','寂しい','切ない','喪失感','虚しい'] },
+  '怒': { type:'neg', label:'怒（怒り）',    words:['腹が立つ','悔しい','理不尽だと感じた','軽蔑','嫌悪'] },
+  '怖': { type:'neg', label:'怖（恐れ）',    words:['不安','緊張','焦り','恐れ','プレッシャー'] },
+  '恥': { type:'neg', label:'恥（罪悪感）',  words:['恥ずかしい','後悔','申し訳ない','自己嫌悪','情けない'] },
+  '嫌': { type:'neg', label:'嫌（嫌悪）',    words:['不快','げんなり','うんざり','拒絶したい','気持ち悪い'] },
+  '虚': { type:'neu', label:'虚（疲れ）',    words:['疲れた','無気力','空虚','退屈','もどかしい'] },
+  '驚': { type:'neu', label:'驚（サプライズ）',words:['驚いた','予想外だった','衝撃を受けた','混乱した','戸惑い'] },
+};
+
+const TARGET_LIST = [
+  { key:'person',  label:'相手に対して',         ph:'相手のどんな部分に？\n例：人前で言う必要はなかったと思った' },
+  { key:'situation',label:'状況・場所に対して',   ph:'その場の何が気になった？\n例：タイミングが最悪だった' },
+  { key:'self',    label:'自分自身に対して',       ph:'自分のどんなところに？\n例：言い返せなかった自分が情けなかった' },
+  { key:'content', label:'内容そのものに対して',   ph:'何が引っかかった？\n例：指摘の内容自体が納得いかなかった' },
+];
+
+const TOTAL_STEPS = 6;
+let curStep = 0, ans = {};
+
+function renderStep(idx) {
+  curStep = idx;
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    document.getElementById('dot-' + i).className = 'step-dot' + (i < idx ? ' done' : i === idx ? ' active' : '');
+  }
+  const cont = document.getElementById('step-content');
+  if (idx === 0) renderStepWhere(cont);
+  else if (idx === 1) renderStepScene(cont);
+  else if (idx === 2) renderStepEmoCategory(cont);
+  else if (idx === 3) renderStepEmoDetail(cont);
+  else if (idx === 4) renderStepTarget(cont);
+  else if (idx === 5) renderStepVerbalize(cont);
+}
+
+function backBtn(idx) {
+  return idx > 0
+    ? `<button class="ghost-btn" onclick="renderStep(${idx-1})">← もどる</button>`
+    : `<button class="ghost-btn" onclick="showSub('sub-branch')">← もどる</button>`;
+}
+
+function renderStepWhere(cont) {
+  cont.innerHTML = `
+    <div class="step-label">STEP 1 / 6</div>
+    <div class="step-q">どこで、誰と<br>いましたか？</div>
+    <input class="input-field" type="text" id="s-inp" placeholder="例：駅近くのカフェで、大学の友人2人と" value="${ans.where||''}">
+    <button class="primary-btn" style="margin-top:24px;" onclick="saveWhere()">次へ →</button>
+    ${backBtn(0)}`;
+}
+function saveWhere() { ans.where = document.getElementById('s-inp').value.trim(); renderStep(1); }
+
+function renderStepScene(cont) {
+  cont.innerHTML = `
+    <div class="step-label">STEP 2 / 6</div>
+    <div class="step-q">何が起きましたか？<br>出来事を中心に記録</div>
+    <textarea class="input-field" id="s-inp" rows="5" placeholder="何をした・見た・聞いた・言ったか。できるだけ具体的に。気持ちはまだ書かなくてOK">${ans.scene||''}</textarea>
+    <div class="char-count"><span id="s-cc">${(ans.scene||'').length}</span> 文字</div>
+    <button class="primary-btn" style="margin-top:24px;" onclick="saveScene()">次へ →</button>
+    ${backBtn(1)}`;
+  const inp = document.getElementById('s-inp');
+  const cc = document.getElementById('s-cc');
+  inp.oninput = () => cc.textContent = inp.value.length;
+}
+function saveScene() { ans.scene = document.getElementById('s-inp').value.trim(); renderStep(2); }
+
+// ===== 感情SVGアイコン =====
+const EMO_ICONS = {
+  '喜': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <circle cx="13" cy="15" r="1.5" data-fill fill="var(--text-sub)"/>
+    <circle cx="23" cy="15" r="1.5" data-fill fill="var(--text-sub)"/>
+    <path d="M12 21c1.5 3 10.5 3 12 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 10 L15 8 M23 10 L21 8" data-stroke stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+  '楽': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <circle cx="13" cy="15" r="1.5" data-fill fill="var(--text-sub)"/>
+    <circle cx="23" cy="15" r="1.5" data-fill fill="var(--text-sub)"/>
+    <path d="M11 20c2 5 12 5 14 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M14 9 Q18 7 22 9" data-stroke stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  </svg>`,
+  '安': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M11 15 Q13 13 15 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M21 15 Q23 13 25 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M13 21c1.5 2.5 8.5 2.5 10 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`,
+  '愛': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M18 24 C18 24 10 19 10 14 C10 11.5 12 10 14 10 C16 10 18 12 18 12 C18 12 20 10 22 10 C24 10 26 11.5 26 14 C26 19 18 24 18 24Z" data-stroke stroke="var(--text-sub)" stroke-width="1.6" fill="none"/>
+  </svg>`,
+  '興': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <circle cx="13" cy="16" r="1.5" data-fill fill="var(--text-sub)"/>
+    <circle cx="23" cy="16" r="1.5" data-fill fill="var(--text-sub)"/>
+    <path d="M14 22 Q18 20 22 22" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M18 9 L18 12 M18 9 L16 11 M18 9 L20 11" data-stroke stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+  '悲': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M11 15 Q13 17 15 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M21 15 Q23 17 25 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M13 23c1.5-2.5 8.5-2.5 10 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M14 19 L13 23 M22 19 L23 23" data-stroke stroke="var(--text-sub)" stroke-width="1.3" stroke-linecap="round"/>
+  </svg>`,
+  '怒': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M11 14 Q13 16 15 14" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M21 14 Q23 16 25 14" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M13 23c1.5-2 8.5-2 10 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 11 L15 13 M25 11 L21 13" data-stroke stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+  '怖': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <circle cx="13" cy="16" r="2" data-fill fill="var(--text-sub)"/>
+    <circle cx="23" cy="16" r="2" data-fill fill="var(--text-sub)"/>
+    <path d="M12 22 L14 20 L16 22 L18 20 L20 22 L22 20 L24 22" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+  '恥': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M11 15 Q13 13 15 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M21 15 Q23 13 25 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M14 21c1.5 2 6.5 2 8 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <ellipse cx="13" cy="19" rx="2.5" ry="1.5" data-stroke stroke="var(--text-sub)" stroke-width="1" fill="none" opacity="0.5"/>
+    <ellipse cx="23" cy="19" rx="2.5" ry="1.5" data-stroke stroke="var(--text-sub)" stroke-width="1" fill="none" opacity="0.5"/>
+  </svg>`,
+  '嫌': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M12 15 L16 15 M20 15 L24 15" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 22c1.5-2.5 8.5-2.5 10 0" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M16 10 L18 8 L20 10" data-stroke stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>`,
+  '虚': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <path d="M12 16 Q14 14 16 16" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M20 16 Q22 14 24 16" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M13 22 L23 22" data-stroke stroke="var(--text-sub)" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`,
+  '驚': `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="14" data-stroke stroke="var(--text-sub)" stroke-width="1.8"/>
+    <circle cx="13" cy="15" r="2" data-fill fill="var(--text-sub)"/>
+    <circle cx="23" cy="15" r="2" data-fill fill="var(--text-sub)"/>
+    <ellipse cx="18" cy="22" rx="3" ry="3.5" data-stroke stroke="var(--text-sub)" stroke-width="1.8" fill="none"/>
+    <path d="M14 9 L12 7 M22 9 L24 7 M18 8 L18 6" data-stroke stroke="var(--text-sub)" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>`,
+};
+
+function renderStepEmoCategory(cont) {
+  const cats = Object.entries(EMOTION_MAP);
+  cont.innerHTML = `
+    <div class="step-label">STEP 3 / 6</div>
+    <div class="step-q">感情の大カテゴリを<br>選んでください</div>
+    <div class="emotion-categories">
+      ${cats.map(([k,v]) => `
+        <button class="emo-cat-btn${ans.emoCat===k?' selected':''}" onclick="selEmoCat('${k}')">
+          ${EMO_ICONS[k]}
+          <span class="emo-label">${v.words[0]}</span>
+        </button>`).join('')}
+    </div>
+    <button class="primary-btn" style="margin-top:8px;" onclick="if(ans.emoCat)renderStep(3);else alert('感情を選んでください')">次へ →</button>
+    ${backBtn(2)}`;
+}
+function selEmoCat(k) {
+  ans.emoCat = k;
+  if (ans.emoWord && !EMOTION_MAP[k].words.includes(ans.emoWord)) ans.emoWord = null;
+  renderStepEmoCategory(document.getElementById('step-content'));
+}
+
+function renderStepEmoDetail(cont) {
+  const cat = EMOTION_MAP[ans.emoCat];
+  cont.innerHTML = `
+    <div class="step-label">STEP 4 / 6</div>
+    <div class="step-q">より近い言葉を<br>選んでください</div>
+    <div style="margin:8px 0 4px;font-size:12px;color:var(--text-sub);">${cat.label}</div>
+    <div class="emotion-detail">
+      ${cat.words.map(w => `<button class="emo-detail-btn${ans.emoWord===w?' selected':''}" onclick="selEmoWord('${w}')">${w}</button>`).join('')}
+    </div>
+    <button class="primary-btn" style="margin-top:8px;" onclick="if(ans.emoWord)renderStep(4);else alert('感情を選んでください')">次へ →</button>
+    ${backBtn(3)}`;
+}
+function selEmoWord(w) {
+  ans.emoWord = w;
+  renderStepEmoDetail(document.getElementById('step-content'));
+}
+
+function renderStepTarget(cont) {
+  cont.innerHTML = `
+    <div class="step-label">STEP 5 / 6</div>
+    <div class="step-q">「${ans.emoWord||'その感情'}」は<br>何に対して？</div>
+    <div class="target-list">
+      ${TARGET_LIST.map(t => `<button class="target-btn${ans.target===t.key?' selected':''}" onclick="selTarget('${t.key}')">${t.label}</button>`).join('')}
+    </div>
+    <button class="primary-btn" style="margin-top:8px;" onclick="if(ans.target)renderStep(5);else alert('対象を選んでください')">次へ →</button>
+    ${backBtn(4)}`;
+}
+function selTarget(k) {
+  ans.target = k;
+  renderStepTarget(document.getElementById('step-content'));
+}
+
+function renderStepVerbalize(cont) {
+  const targetObj = TARGET_LIST.find(t => t.key === ans.target) || TARGET_LIST[0];
+  const ph = targetObj.ph.replace(/\n/g, '\n');
+  cont.innerHTML = `
+    <div class="step-label">STEP 6 / 6</div>
+    <div class="step-q">「${ans.emoWord||'その感情'}」を<br>言葉にしてみて</div>
+    <div style="font-size:12px;color:var(--text-sub);margin:4px 0 12px;">${targetObj.label}</div>
+    <textarea class="input-field" id="s-inp" rows="5" placeholder="${ph}">${ans.verbalize||''}</textarea>
+    <div class="char-count"><span id="s-cc">${(ans.verbalize||'').length}</span> 文字</div>
+    <button class="primary-btn" style="margin-top:24px;" onclick="saveVerbalize()">記録する 🌿</button>
+    ${backBtn(5)}`;
+  const inp = document.getElementById('s-inp');
+  const cc = document.getElementById('s-cc');
+  inp.oninput = () => cc.textContent = inp.value.length;
+}
+function saveVerbalize() {
+  ans.verbalize = document.getElementById('s-inp').value.trim();
+  saveRecord('structured');
+  showSub('sub-done');
+}
+
+function selMood(v) {
+  ans.mood = v;
+  document.querySelectorAll('.mood-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === v));
+}
+
+async function saveRecord(type) {
+  const key = toKey(recordDate);
+  let totalChars = 0;
+  let record;
+  if (type === 'structured') {
+    record = {
+      score: 3, type: 'structured',
+      where: ans.where||'',
+      scene: ans.scene||'',
+      emoCat: ans.emoCat||'',
+      emoWord: ans.emoWord||'',
+      target: ans.target||'',
+      verbalize: ans.verbalize||''
+    };
+    totalChars = (ans.scene||'').length + (ans.verbalize||'').length;
+  } else {
+    const moodBtns = document.querySelectorAll('#mini-mood-row .mood-btn');
+    let score = 3;
+    moodBtns.forEach((b, i) => { if (b.classList.contains('selected')) score = i + 1; });
+    const answer = document.getElementById('mini-answer').value;
+    record = { score, type: 'mini', question: document.getElementById('mini-sel-q').textContent, answer };
+    totalChars = answer.length;
+  }
+  ans = {};
+  await saveDB(key, record);
+  renderStreak();
+  showDoneFeedback(totalChars);
+}
+
+function showDoneFeedback(todayChars) {
+  // 今月の平均文字数を計算
+  const prefix = `${NOW.getFullYear()}-${pad(NOW.getMonth()+1)}`;
+  const monthEntries = Object.entries(DB).filter(([k]) => k.startsWith(prefix));
+  const charCounts = monthEntries.map(([,r]) => {
+    if (r.type === 'structured') return (r.scene||'').length + (r.why||'').length;
+    return (r.answer||'').length;
+  });
+  const monthAvg = charCounts.length > 1
+    ? Math.round(charCounts.reduce((s,v)=>s+v,0) / charCounts.length)
+    : null;
+
+  let feedbackHTML = `<div style="font-size:12px;color:var(--text-sub);margin-bottom:10px;letter-spacing:0.08em;">TODAY'S WRITING</div>`;
+  feedbackHTML += `<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+    <span style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--accent-dark);line-height:1;">${todayChars}</span>
+    <span style="font-size:13px;color:var(--text-sub);">文字</span>
+  </div>`;
+
+  if (monthAvg !== null) {
+    const diff = todayChars - monthAvg;
+    const diffText = diff >= 0
+      ? `<span style="color:var(--accent);font-weight:700;">+${diff}字</span> 今月平均より多い`
+      : `<span style="color:var(--text-sub);">${diff}字</span> 今月平均より少ない`;
+    feedbackHTML += `<div style="font-size:12px;color:var(--text-sub);">今月平均 ${monthAvg}字 ／ ${diffText}</div>`;
+  } else {
+    feedbackHTML += `<div style="font-size:12px;color:var(--text-sub);">今月最初の記録です</div>`;
+  }
+
+  document.getElementById('done-feedback').innerHTML = feedbackHTML;
+}
+
+// ===== ない側 =====
+const MINI_QS = [
+  {icon:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="var(--text-sub)" stroke-width="1.5"/><line x1="12.5" y1="12.5" x2="17" y2="17" stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/></svg>`,text:'今日調べたこと'},
+  {icon:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="8" ry="5" stroke="var(--text-sub)" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="var(--text-sub)"/></svg>`,text:'一番目に入ったもの'},
+  {icon:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h10M3 15h7" stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/></svg>`,text:'今日交わした言葉で印象に残ったもの'},
+  {icon:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="4" stroke="var(--text-sub)" stroke-width="1.5"/><line x1="10" y1="13" x2="10" y2="16" stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="17.5" r=".8" fill="var(--text-sub)"/></svg>`,text:'ふと考えたこと'},
+  {icon:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3C6 3 3 6 3 10C3 14 6 17 10 17C14 17 17 14 17 10" stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="2" fill="var(--text-sub)"/></svg>`,text:'今この瞬間の気持ち'},
+];
+let selMiniQ = null;
+
+function renderMiniList() {
+  selMiniQ = null;
+  document.getElementById('mini-q-list').innerHTML = MINI_QS.map((q,i) =>
+    `<div class="q-card" id="qc-${i}" onclick="pickMiniQ(${i})"><span class="q-icon">${q.icon}</span><span class="q-text">${q.text}</span></div>`
+  ).join('');
+}
+
+function pickMiniQ(i) {
+  selMiniQ = i;
+  document.querySelectorAll('.q-card').forEach((c, j) => c.classList.toggle('selected', i === j));
+  setTimeout(() => {
+    showSub('sub-mini-input');
+    document.getElementById('mini-sel-q').textContent = MINI_QS[i].text;
+    const ta = document.getElementById('mini-answer'); ta.value = '';
+    document.getElementById('mini-char').textContent = '0';
+    ta.oninput = () => document.getElementById('mini-char').textContent = ta.value.length;
+    const MOOD_LBL = ['','最悪','微妙','普通','良い','最高'];
+    const row = document.getElementById('mini-mood-row'); row.innerHTML = '';
+    for (let j = 1; j <= 5; j++) {
+      const b = document.createElement('button'); b.className = 'mood-btn';
+      b.innerHTML = `<span class="num">${j}</span><span class="lbl">${MOOD_LBL[j]}</span>`;
+      b.onclick = () => row.querySelectorAll('.mood-btn').forEach((x, k) => x.classList.toggle('selected', k + 1 === j));
+      row.appendChild(b);
+    }
+  }, 160);
+}
+
+// ===== カレンダー =====
+let calYear = NOW.getFullYear(), calMonth = NOW.getMonth();
+function changeMonth(d) { calMonth += d; if (calMonth > 11) { calMonth = 0; calYear++; } if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+
+function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = `${calYear}年 ${calMonth + 1}月`;
+  const grid = document.getElementById('cal-grid'); grid.innerHTML = '';
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const days = new Date(calYear, calMonth + 1, 0).getDate();
+  for (let i = 0; i < first; i++) { const e = document.createElement('div'); e.className = 'day-cell'; grid.appendChild(e); }
+  for (let d = 1; d <= days; d++) {
+    const key = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const rec = DB[key];
+    const isToday = calYear === NOW.getFullYear() && calMonth === NOW.getMonth() && d === NOW.getDate();
+    const dow = new Date(calYear, calMonth, d).getDay();
+    const cell = document.createElement('div');
+    let cls = 'day-cell';
+    if (rec) cls += ' has-record';
+    if (isToday) cls += ' today';
+    if (dow === 0) cls += ' sun-col';
+    if (dow === 6) cls += ' sat-col';
+    cell.className = cls;
+    const num = document.createElement('div'); num.className = 'day-num'; num.textContent = d; cell.appendChild(num);
+    if (rec) {
+      const fill = document.createElement('div'); fill.className = 'score-fill';
+      fill.style.height = `${rec.score * 20}%`;
+      fill.style.background = `rgba(106,158,127,${0.1 + (rec.score - 1) * 0.07})`;
+      cell.appendChild(fill);
+      cell.addEventListener('click', () => openDrawer(key, d, rec));
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function openDrawer(key, day, rec) {
+  const MN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('drawer-date').textContent = `${calYear}年 ${MN[calMonth]} ${day}日`;
+  document.getElementById('drawer-score').textContent = rec.score;
+  let body = '';
+  if (rec.type === 'structured') {
+    const targetLabel = TARGET_LIST.find(t=>t.key===rec.target)?.label || rec.target || '';
+    body = `<div class="drawer-sec">どこで / 誰と</div><div class="drawer-content">${rec.where}</div>
+      <div class="drawer-sec">出来事</div><div class="drawer-content">${rec.scene}</div>
+      <div class="drawer-sec">感情</div><div class="drawer-content">${rec.emoWord||rec.emoCat||''}</div>
+      <div class="drawer-sec">${targetLabel}</div><div class="drawer-content">${rec.verbalize||rec.why||''}</div>`;
+  } else {
+    body = `<div class="drawer-sec">${rec.question}</div><div class="drawer-content">${rec.answer}</div>`;
+  }
+  document.getElementById('drawer-body').innerHTML = body;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() { document.getElementById('overlay').classList.remove('open'); document.getElementById('drawer').classList.remove('open'); }
+
+// ===== レポート =====
+let repYear = NOW.getFullYear(), repMonth = NOW.getMonth();
+function changeReportMonth(d) { repMonth += d; if (repMonth > 11) { repMonth = 0; repYear++; } if (repMonth < 0) { repMonth = 11; repYear--; } renderReport(); }
+
+// 感情カテゴリの色定義
+const EMO_COLORS = {
+  '喜':'#f5c842','楽':'#6ac97a','安':'#6ab8c9','愛':'#e87070','興':'#a06ac9',
+  '悲':'#7090c0','怒':'#c97070','怖':'#c9a06a','恥':'#c96aa0','嫌':'#909090',
+  '虚':'#b0b0b0','驚':'#c9c06a'
+};
+const EMO_TYPE_COLORS = { pos:'#6a9e7f', neg:'#c07070', neu:'#8090b0' };
+
+function calcVerbalizeScore(rec) {
+  // 言語化スコア: verbalizeの文字数を0-100に正規化（100文字で満点）
+  const chars = (rec.verbalize || rec.why || rec.answer || '').length;
+  return Math.min(100, Math.round(chars));
+}
+
+function renderReport() {
+  const prefix = `${repYear}-${pad(repMonth+1)}`;
+  document.getElementById('rep-month-label').textContent = `${repYear}年 ${repMonth + 1}月`;
+  const monthEntries = Object.entries(DB).filter(([k]) => k.startsWith(prefix));
+
+  if (!monthEntries.length) {
+    document.getElementById('sum-count').textContent = '0';
+    document.getElementById('sum-diversity').textContent = '—';
+    document.getElementById('sum-verbalize').textContent = '—';
+    document.getElementById('memo-text').textContent = 'まだ記録がありません。';
+    document.getElementById('emo-trend-card').style.display = 'none';
+    document.getElementById('target-card').style.display = 'none';
+    document.getElementById('new-words-card').style.display = 'none';
+    drawChart({}, 'verbalize'); return;
+  }
+
+  document.getElementById('emo-trend-card').style.display = 'block';
+  document.getElementById('target-card').style.display = 'block';
+
+  // ① 記録日数
+  document.getElementById('sum-count').textContent = monthEntries.length;
+
+  // ② 感情の多様性スコア（使ったユニークな感情語の数）
+  const emoWords = monthEntries.map(([,r]) => r.emoWord).filter(Boolean);
+  const uniqueEmoWords = new Set(emoWords);
+  const diversityScore = uniqueEmoWords.size;
+  document.getElementById('sum-diversity').textContent = diversityScore ? `${diversityScore}語` : '—';
+
+  // ③ 言語化スコア（平均）
+  const vScores = monthEntries.map(([,r]) => calcVerbalizeScore(r));
+  const avgVScore = Math.round(vScores.reduce((s,v)=>s+v,0) / vScores.length);
+  document.getElementById('sum-verbalize').textContent = avgVScore ? `${avgVScore}pt` : '—';
+
+  // ④ 感情の傾向（ドーナツグラフ）
+  const catCount = {};
+  monthEntries.forEach(([,r]) => {
+    if (r.emoCat) catCount[r.emoCat] = (catCount[r.emoCat]||0) + 1;
+  });
+  drawDonut(catCount);
+
+  // ⑤ 感情の向き先（横棒グラフ）
+  const targetCount = { person:0, situation:0, self:0, content:0 };
+  monthEntries.forEach(([,r]) => { if (r.target) targetCount[r.target]++; });
+  const targetTotal = Object.values(targetCount).reduce((s,v)=>s+v,0);
+  const targetBars = document.getElementById('target-bars');
+  if (targetTotal > 0) {
+    targetBars.innerHTML = TARGET_LIST.map(t => {
+      const cnt = targetCount[t.key] || 0;
+      const pct = Math.round(cnt / targetTotal * 100);
+      return `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+            <span style="color:var(--text);">${t.label}</span>
+            <span style="color:var(--text-sub);">${cnt}件 (${pct}%)</span>
+          </div>
+          <div style="height:7px;border-radius:4px;background:var(--border);overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:4px;transition:width .6s ease;"></div>
+          </div>
+        </div>`;
+    }).join('');
+  } else {
+    targetBars.innerHTML = '<span style="font-size:13px;color:var(--text-sub);">構造化記録がありません</span>';
+  }
+
+  // ⑥ 言語化スコア推移（折れ線グラフ）
+  const scoresByDay = {};
+  monthEntries.forEach(([k,r]) => { scoresByDay[parseInt(k.split('-')[2])] = calcVerbalizeScore(r); });
+  drawChart(scoresByDay, 'verbalize');
+
+  // ⑦ 今月はじめて使った感情語
+  const allEmoWords = Object.values(EMOTION_MAP).flatMap(v => v.words);
+  const prevEmoWords = new Set(
+    Object.entries(DB)
+      .filter(([k]) => !k.startsWith(prefix))
+      .map(([,r]) => r.emoWord).filter(Boolean)
+  );
+  const newEmos = [...uniqueEmoWords].filter(w => !prevEmoWords.has(w));
+  const newWordsCard = document.getElementById('new-words-card');
+  if (newEmos.length) {
+    newWordsCard.style.display = 'block';
+    document.getElementById('new-word-list').innerHTML = newEmos.map(w => `<span class="word-tag">${w}</span>`).join('');
+  } else {
+    newWordsCard.style.display = 'none';
+  }
+
+  // ⑧ ひとことまとめ
+  const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+  const topCatLabel = topCat ? EMOTION_MAP[topCat[0]]?.label || topCat[0] : '';
+  const topTarget = Object.entries(targetCount).sort((a,b)=>b[1]-a[1])[0];
+  const topTargetLabel = topTarget && targetTotal > 0 ? TARGET_LIST.find(t=>t.key===topTarget[0])?.label || '' : '';
+  let memo = `${monthEntries.length}日間の記録。`;
+  if (topCatLabel) memo += `よく感じた感情は「${topCatLabel}」。`;
+  if (topTargetLabel && targetTotal > 0) memo += `感情の向き先は「${topTargetLabel}」が多かった。`;
+  if (avgVScore) memo += `平均言語化スコアは${avgVScore}pt。`;
+  document.getElementById('memo-text').textContent = memo;
+}
+
+function drawDonut(catCount) {
+  const svg = document.getElementById('donut-chart');
+  const legend = document.getElementById('donut-legend');
+  svg.innerHTML = '';
+  const total = Object.values(catCount).reduce((s,v)=>s+v,0);
+  if (!total) { svg.innerHTML = ''; legend.innerHTML = '<span style="font-size:12px;color:var(--text-sub);">感情データなし</span>'; return; }
+
+  const cx = 55, cy = 55, R = 44, r = 28;
+  let startAngle = -Math.PI / 2;
+  const entries = Object.entries(catCount).sort((a,b)=>b[1]-a[1]);
+
+  entries.forEach(([cat, cnt]) => {
+    const angle = (cnt / total) * Math.PI * 2;
+    const endAngle = startAngle + angle;
+    const x1 = cx + R * Math.cos(startAngle), y1 = cy + R * Math.sin(startAngle);
+    const x2 = cx + R * Math.cos(endAngle),   y2 = cy + R * Math.sin(endAngle);
+    const ix1 = cx + r * Math.cos(startAngle), iy1 = cy + r * Math.sin(startAngle);
+    const ix2 = cx + r * Math.cos(endAngle),   iy2 = cy + r * Math.sin(endAngle);
+    const large = angle > Math.PI ? 1 : 0;
+    const color = EMO_COLORS[cat] || '#aaa';
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${ix1},${iy1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${r},${r} 0 ${large},0 ${ix1},${iy1} Z`);
+    path.setAttribute('fill', color);
+    path.setAttribute('opacity', '0.9');
+    svg.appendChild(path);
+    startAngle = endAngle;
+  });
+
+  legend.innerHTML = entries.map(([cat, cnt]) => {
+    const pct = Math.round(cnt / total * 100);
+    const color = EMO_COLORS[cat] || '#aaa';
+    const label = EMOTION_MAP[cat]?.label || cat;
+    return `<div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+      <span style="font-size:11px;color:var(--text);">${label}</span>
+      <span style="font-size:11px;color:var(--text-sub);margin-left:auto;">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function drawChart(scoresByDay, type) {
+  const svg = document.getElementById('line-chart');
+  const W = svg.parentElement.offsetWidth || 300, H = 160;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('height', H); svg.innerHTML = '';
+  const P = {t:16, r:16, b:28, l:36};
+  const cW = W - P.l - P.r, cH = H - P.t - P.b;
+  const dim = new Date(repYear, repMonth + 1, 0).getDate();
+  const maxVal = type === 'verbalize' ? 100 : 5;
+  const steps = type === 'verbalize' ? [0,25,50,75,100] : [1,2,3,4,5];
+  steps.forEach(s => {
+    const y = P.t + cH - (s / maxVal) * cH;
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',P.l); ln.setAttribute('x2',W-P.r); ln.setAttribute('y1',y); ln.setAttribute('y2',y);
+    ln.setAttribute('stroke','var(--border)'); ln.setAttribute('stroke-width','1'); svg.appendChild(ln);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',P.l-6); t.setAttribute('y',y+4); t.setAttribute('text-anchor','end');
+    t.setAttribute('font-size','9'); t.setAttribute('fill','var(--text-sub)'); t.textContent = s; svg.appendChild(t);
+  });
+  const entries = Object.entries(scoresByDay).sort((a,b)=>Number(a[0])-Number(b[0]));
+  if (!entries.length) return;
+  const tx = d => P.l + ((Number(d)-1)/(dim-1||1))*cW;
+  const ty = s => P.t + cH - (s / maxVal)*cH;
+  const pts = entries.map(([d,s])=>`${tx(d)},${ty(s)}`).join(' ');
+  const area = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  const first = entries[0], last = entries[entries.length-1];
+  area.setAttribute('points', `${tx(first[0])},${P.t+cH} ${pts} ${tx(last[0])},${P.t+cH}`);
+  area.setAttribute('fill','var(--accent)'); area.setAttribute('opacity','0.12'); svg.appendChild(area);
+  const poly = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+  poly.setAttribute('points', pts); poly.setAttribute('fill','none');
+  poly.setAttribute('stroke','var(--accent)'); poly.setAttribute('stroke-width','2'); svg.appendChild(poly);
+  entries.forEach(([d,s]) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',tx(d)); c.setAttribute('cy',ty(s)); c.setAttribute('r','3');
+    c.setAttribute('fill','var(--accent)'); svg.appendChild(c);
+  });
+}
+
+// ===== 振り返り =====
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function renderLookback() {
+  const all = Object.entries(DB).map(([date, r]) => ({ date, ...r }));
+  const picked = shuffle(all).slice(0, 5);
+  document.getElementById('lb-list').innerHTML = picked.map(r => {
+    const [y,m,d] = r.date.split('-');
+    const label = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+    const preview = r.type === 'structured' ? r.scene : r.answer;
+    return `<div class="lb-card">
+      <div class="lb-meta">
+        <div><div class="lb-date">${label}</div>${r.question?`<div class="lb-q">${r.question}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="lb-badge">${r.type==='structured'?'記録':'ひとこと'}</span>
+          <span class="lb-score">${r.score}</span>
+        </div>
+      </div>
+      <div class="lb-text">${preview||''}</div>
+    </div>`;
+  }).join('');
+}
+
+function switchSubTab(name) {
+  ['lb','set'].forEach(t => { document.getElementById('tab-'+t).classList.toggle('active', t===name); document.getElementById('subtab-'+t).classList.toggle('active', t===name); });
+}
+
+// ===== テーマ =====
+const THEMES = [
+  {id:'green', name:'白 × 緑', bg:'#f7f9f6', accent:'#6a9e7f', text:'#2c3a30'},
+  {id:'bluegrey', name:'白 × ブルーグレー', bg:'#f5f7fa', accent:'#6a84a8', text:'#2a3040'},
+  {id:'terracotta', name:'白 × テラコッタ', bg:'#faf7f5', accent:'#b07060', text:'#3a2820'},
+  {id:'dark', name:'ダーク', bg:'#181c1a', accent:'#6a9e7f', text:'#e0ebe4'},
+];
+let curTheme = 'green';
+
+function renderThemes() {
+  document.getElementById('theme-grid').innerHTML = THEMES.map(t => `
+    <div class="theme-opt${curTheme===t.id?' selected':''}" onclick="applyTheme('${t.id}')">
+      <div class="theme-preview" style="background:${t.bg}">
+        <div class="theme-dot" style="background:${t.accent}"></div>
+        <div class="theme-line" style="background:${t.accent}"></div>
+        <div class="theme-dot" style="background:${t.text};opacity:.3"></div>
+      </div>
+      <div class="theme-name">${t.name}</div>
+      <div class="theme-check">${curTheme===t.id?'✓':''}</div>
+    </div>`).join('');
+}
+
+function applyTheme(id) {
+  curTheme = id;
+  const app = document.getElementById('app');
+  id === 'green' ? app.removeAttribute('data-theme') : app.setAttribute('data-theme', id);
+  document.body.style.background = getComputedStyle(app).getPropertyValue('--bg');
+  renderThemes();
+}
+
+// ===== エクスポート / インポート =====
+function handleExport() {
+  const blob = new Blob([JSON.stringify({version:'1.0',records:DB},null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = 'sirra_backup.json'; a.click(); URL.revokeObjectURL(url);
+}
+function handleImport() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader();
+    r.onload = async ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        const records = d.records || {};
+        for (const [date, rec] of Object.entries(records)) { await saveDB(date, rec); }
+        renderCalendar(); renderReport();
+        alert(`インポート完了：${Object.keys(records).length}件の記録を読み込みました`);
+      } catch { alert('読み込みに失敗しました'); }
+    };
+    r.readAsText(f); }; inp.click();
+}
+function handleDelete() { if (confirm('すべてのデータを削除しますか？この操作は取り消せません。')) { idbClear().then(() => { Object.keys(DB).forEach(k => delete DB[k]); renderCalendar(); renderReport(); alert('データを削除しました'); }); } }
+
+// ===== 連続記録日数 =====
+function calcStreak() {
+  const keys = Object.keys(DB).sort().reverse();
+  if (!keys.length) return 0;
+  let streak = 0;
+  let check = new Date(NOW);
+  // 今日記録がなければ昨日から数える
+  if (!DB[toKey(NOW)]) check.setDate(check.getDate() - 1);
+  for (let i = 0; i < 365; i++) {
+    if (DB[toKey(check)]) { streak++; check.setDate(check.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function renderStreak() {
+  const streak = calcStreak();
+  const area = document.getElementById('streak-area');
+  if (streak >= 2) {
+    area.innerHTML = `<div class="streak-badge">🔥 ${streak}日連続</div>`;
+  } else if (streak === 1) {
+    area.innerHTML = `<div class="streak-badge">✨ 今日も記録</div>`;
+  } else {
+    area.innerHTML = '';
+  }
+}
+
+// ===== 月次振り返り =====
+let recapSlides = [], recapIndex = 0;
+
+function buildRecapSlides(year, month) {
+  const prefix = `${year}-${pad(month)}`;
+  const MN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const monthName = `${year}年${MN[month-1]}`;
+  const entries = Object.entries(DB).filter(([k]) => k.startsWith(prefix));
+  if (!entries.length) return [];
+
+  const scores = entries.map(([,r]) => r.score);
+  const avg = (scores.reduce((s,v)=>s+v,0)/scores.length).toFixed(1);
+  const bestEntry = entries.sort((a,b)=>b[1].score-a[1].score)[0];
+  const bestDay = parseInt(bestEntry[0].split('-')[2]);
+  const allText = entries.map(([,r])=>[r.answer||'',r.scene||'',r.why||''].join('')).join('');
+
+  // よく使った言葉
+  const units = allText.match(/[\u3041-\u9FFF]{2,6}/g)||[];
+  const freq = {};
+  units.forEach(w=>{freq[w]=(freq[w]||0)+1;});
+  const topWords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([w])=>w);
+
+  // ポジネガ
+  const POS = ['嬉しい','楽しい','幸せ','感謝','穏やか','安心','充実','温かい','心地よい','清々しい'];
+  const NEG = ['悲しい','寂しい','怖い','不安','焦り','切ない','苦しい','辛い','悔しい','虚しい','疲れ'];
+  const posCount = POS.filter(w=>allText.includes(w)).length;
+  const negCount = NEG.filter(w=>allText.includes(w)).length;
+  const mood = posCount > negCount ? 'ポジティブな月でした' : posCount < negCount ? '少し重たい月でした' : 'バランスのとれた月でした';
+
+  return [
+    {
+      html: `<div class="recap-label">${monthName}の記録</div>
+             <div class="recap-num">${entries.length}</div>
+             <div class="recap-unit">日間、記録しました</div>`
+    },
+    {
+      html: `<div class="recap-label">平均気分スコア</div>
+             <div class="recap-num">${avg}</div>
+             <div class="recap-unit">/ 5.0</div>
+             <div class="recap-sub" style="margin-top:20px;">一番スコアが高かったのは<br>${bestDay}日でした</div>`
+    },
+    {
+      html: `<div class="recap-label">よく出てきた言葉</div>
+             <div class="recap-words">${topWords.map((w,i)=>`<span class="recap-word${i<2?' large':''}">${w}</span>`).join('')}</div>`
+    },
+    {
+      html: `<div class="recap-label">この月をひとことで</div>
+             <div class="recap-text">${mood}</div>
+             <div class="recap-sub">ポジティブ語 ${posCount}個 / ネガティブ語 ${negCount}個</div>`
+    },
+    {
+      html: `<div class="recap-label">お疲れさまでした</div>
+             <div class="recap-text">言葉にした分だけ、<br>自分のことが<br>わかってくる。</div>
+             <div class="recap-sub" style="margin-top:24px;">${monthName}の記録、おわり</div>`
+    },
+  ];
+}
+
+function showRecap(year, month) {
+  recapSlides = buildRecapSlides(year, month);
+  if (!recapSlides.length) return;
+  recapIndex = 0;
+  const container = document.getElementById('recap-slides');
+  const progress = document.getElementById('recap-progress');
+  container.innerHTML = recapSlides.map((s,i)=>
+    `<div class="recap-slide${i===0?' active':''}" id="rslide-${i}">${s.html}</div>`
+  ).join('');
+  progress.innerHTML = recapSlides.map((_,i)=>
+    `<div class="recap-dot${i===0?' active':''}" id="rdot-${i}"></div>`
+  ).join('');
+  document.getElementById('recap').style.display = 'flex';
+}
+
+function nextRecapSlide() {
+  if (recapIndex >= recapSlides.length - 1) { closeRecap(); return; }
+  document.getElementById(`rslide-${recapIndex}`).classList.remove('active');
+  document.getElementById(`rdot-${recapIndex}`).classList.remove('active');
+  recapIndex++;
+  document.getElementById(`rslide-${recapIndex}`).classList.add('active');
+  document.getElementById(`rdot-${recapIndex}`).classList.add('active');
+}
+
+function closeRecap() {
+  document.getElementById('recap').style.display = 'none';
+  const now = new Date();
+  localStorage.setItem('sirra_recap_shown', `${now.getFullYear()}-${pad(now.getMonth()+1)}`);
+}
+
+function checkRecap() {
+  const now = new Date();
+  // 月初（1〜3日）のみ表示
+  if (now.getDate() > 3) return;
+  const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+  const prevYear = now.getMonth() === 0 ? now.getFullYear()-1 : now.getFullYear();
+  const shownKey = `${prevYear}-${pad(prevMonth)}`;
+  if (localStorage.getItem('sirra_recap_shown') === shownKey) return;
+  // 前月にデータがあれば表示
+  setTimeout(() => showRecap(prevYear, prevMonth), 800);
+}
+const TUT_SCENES = [
+  { text: '今日起きたこと', sub: '教えてください' },
+  { text: '言葉に出来ても、\n出来なくても', sub: '' },
+  { text: '記録してみませんか', sub: '' },
+];
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runTutorial() {
+  const el = document.getElementById('tut-text');
+  const sub = document.getElementById('tut-sub');
+
+  for (const scene of TUT_SCENES) {
+    el.textContent = scene.text.replace(/\n/g, '');
+    el.innerHTML = scene.text.replace(/\n/g, '<br>');
+    sub.textContent = scene.sub;
+
+    // フェードイン
+    await sleep(50);
+    el.classList.add('show');
+    if (scene.sub) sub.classList.add('show');
+
+    await sleep(2200);
+
+    // フェードアウト
+    el.classList.remove('show');
+    sub.classList.remove('show');
+
+    await sleep(1000);
+  }
+
+  endTutorial();
+}
+
+function endTutorial() {
+  const tut = document.getElementById('tutorial');
+  tut.style.transition = 'opacity .6s ease';
+  tut.style.opacity = '0';
+  setTimeout(() => { tut.style.display = 'none'; }, 650);
+  localStorage.setItem('sirra_tutorial_done', '1');
+}
+
+function skipTutorial() { endTutorial(); }
+
+// ===== 初期化 =====
+initDB().then(() => {
+  renderThemes();
+  renderCalendar();
+  renderReport();
+  renderStreak();
+
+  // 初回起動チェック
+  if (!localStorage.getItem('sirra_tutorial_done')) {
+    runTutorial();
+  } else {
+    document.getElementById('tutorial').style.display = 'none';
+    checkRecap();
+  }
+});
+
+// ===== Service Worker登録 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.log('SW登録失敗:', err));
+  });
+}
+</script>
+</body>
+</html>
